@@ -125,7 +125,7 @@ const fetchTodaySchedule = async () => {
   };
 
   return (
-<div className="p-6 bg-[#f1fafa] min-h-screen">
+<div className="p-6 bg-[#f1fafa]">
   <Toaster position="top-center" />
 
   <div className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow-md">
