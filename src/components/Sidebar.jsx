@@ -5,10 +5,10 @@ import { LayoutDashboard, Calendar, ListChecks, Settings, Waves } from 'lucide-r
 export default function Sidebar({ isOpen, onClose }) {
   return (
     <div
-      className={`fixed md:static top-0 left-0 z-40 h-full w-64 bg-[#0e3a38] text-white transform transition-transform duration-300 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-      }`}
+      className={`fixed md:static top-0 left-0 z-40 w-64 bg-[#0e3a38] text-white transform transition-transform duration-300 flex flex-col h-screen md:min-h-screen ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
     >
+
       <div className="flex items-center justify-between px-6 py-6 md:justify-start text-green-400 font-bold text-xl">
         <div className="flex items-center gap-2">
           <Waves className="w-6 h-6" />
@@ -33,8 +33,7 @@ export default function Sidebar({ isOpen, onClose }) {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-2 px-4 py-2 rounded ${
-                isActive ? 'bg-teal-700 text-white' : 'hover:bg-teal-800 text-gray-100'
+              `flex items-center gap-2 px-4 py-2 rounded ${isActive ? 'bg-teal-700 text-white' : 'hover:bg-teal-800 text-gray-100'
               }`
             }
           >
