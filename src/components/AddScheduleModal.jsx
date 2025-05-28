@@ -198,7 +198,7 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
                 )}
               </div>
 
-              {editDate && existingEntry?.inTime && existingEntry?.outTime && (
+              {editDate &&  (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                   <div>
                     <label className="block text-sm text-gray-600">Punch In Time</label>
@@ -255,11 +255,11 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
           <button onClick={handleSubmit} className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700">
             Save Schedule
           </button>
-          {editDate && existingEntry && (
+          {/* {editDate && existingEntry && (
             <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
               Delete
             </button>
-          )}
+          )} */}
         </div>
       </div>
     </div>

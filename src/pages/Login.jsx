@@ -75,6 +75,21 @@ export default function Login() {
           >
             {isRegister ? 'Sign Up' : 'Sign In'}
           </button>
+          <div className="mt-6">
+            <button
+              onClick={handleGoogleLogin}
+              type="button"
+              className="w-full py-2 border border-gray-300 rounded-md hover:bg-gray-100 text-gray-800 flex items-center justify-center gap-2"
+            >
+              <img
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                alt="Google"
+                className="h-5 w-5"
+              />
+              Continue with Google
+            </button>
+          </div>
+
         </form>
 
         <p className="mt-4 text-sm text-gray-600">

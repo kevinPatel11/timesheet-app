@@ -82,22 +82,36 @@ export default function Schedule() {
 
     return (
         <div className="px-4">
-            <div className="flex justify-between items-center mb-6">
+           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                {/* Title and Icon */}
                 <div className="flex items-center gap-2 text-teal-700">
                     <Calendar size={24} />
-                    <h2 className="text-2xl font-semibold">Weekly Schedule</h2>
+                    <h2 className="text-xl sm:text-2xl font-semibold">Weekly Schedule</h2>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button onClick={handlePrevWeek} className="px-3 py-1 border rounded hover:bg-gray-100">Previous Week</button>
-                    <button onClick={handleNextWeek} className="px-3 py-1 border rounded hover:bg-gray-100">Next Week</button>
+
+                {/* Buttons */}
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <button
+                        onClick={handlePrevWeek}
+                        className="px-3 py-2 border rounded hover:bg-gray-100 text-sm sm:text-base"
+                    >
+                        Previous Week
+                    </button>
+                    <button
+                        onClick={handleNextWeek}
+                        className="px-3 py-2 border rounded hover:bg-gray-100 text-sm sm:text-base"
+                    >
+                        Next Week
+                    </button>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 font-medium"
+                        className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 text-sm sm:text-base"
                     >
                         + Add Entry
                     </button>
                 </div>
             </div>
+
             {/* Week Range Display */}
             <div className="text-center mb-6">
                 <h3 className="text-sm text-gray-500">
@@ -155,9 +169,25 @@ export default function Schedule() {
                                             )}
 
                                             {entry.outTime && (
-                                                <p className="text-orange-700">
-                                                    🕓 Punched Out: {dayjs(`${entry.date} ${entry.outTime}`, 'YYYY-MM-DD HH:mm').format('h:mm A')}
-                                                </p>
+                                                <>
+                                                    <p className="text-orange-700">
+                                                        🕓 Punched Out: {dayjs(`${entry.date} ${entry.outTime}`, 'YYYY-MM-DD HH:mm').format('h:mm A')}
+                                                    </p>
+
+                                                    {entry.inTime && (
+                                                        <p className=" font-bold text-green-600">
+                                                            ⏱ Total Worked:{' '}
+                                                            {(() => {
+                                                                const inTime = dayjs(`${entry.date} ${entry.inTime}`, 'YYYY-MM-DD HH:mm');
+                                                                const outTime = dayjs(`${entry.date} ${entry.outTime}`, 'YYYY-MM-DD HH:mm');
+                                                                const diff = outTime.diff(inTime, 'minute');
+                                                                const hrs = Math.floor(diff / 60);
+                                                                const mins = diff % 60;
+                                                                return `${hrs}h ${mins}m`;
+                                                            })()}
+                                                        </p>
+                                                    )}
+                                                </>
                                             )}
 
                                             {entry.manager && (

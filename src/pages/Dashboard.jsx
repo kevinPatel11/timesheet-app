@@ -197,7 +197,7 @@ const fetchTodaySchedule = async () => {
 
         {/* Custom Time */}
         <div className="mt-4 text-left">
-          <label className="text-sm text-gray-600 block mb-1">Custom Time</label>
+          <label className="text-sm text-gray-600 block mb-1">Time</label>
           <input
             type="time"
             value={customTime}
@@ -215,7 +215,7 @@ const fetchTodaySchedule = async () => {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-md bg-[#f1fafa]"
-            placeholder="e.g., helping with training"
+            placeholder=""
           />
         </div>
 
