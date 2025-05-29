@@ -59,24 +59,34 @@ export default function Schedule() {
         setEditDate(null);
     };
 
-    // Calculate total hours
+
     let totalScheduledMinutes = 0;
     let totalWorkedMinutes = 0;
-
-    Object.values(scheduleData).forEach((entry) => {
-        if (entry.status === 'scheduled' && entry.startTime && entry.endTime) {
-            const start = dayjs(`${entry.date} ${entry.startTime}`, 'YYYY-MM-DD HH:mm');
-            const end = dayjs(`${entry.date} ${entry.endTime}`, 'YYYY-MM-DD HH:mm');
-            totalScheduledMinutes += end.diff(start, 'minute');
-        }
-
-        if (entry.inTime && entry.outTime) {
-            const punchIn = dayjs(`${entry.date} ${entry.inTime}`, 'YYYY-MM-DD HH:mm');
-            const punchOut = dayjs(`${entry.date} ${entry.outTime}`, 'YYYY-MM-DD HH:mm');
-            totalWorkedMinutes += punchOut.diff(punchIn, 'minute');
-        }
+  
+    Object.values(scheduleData).forEach(entry => {
+      if (entry.status === 'scheduled' && entry.startTime && entry.endTime) {
+        const start = dayjs(`${entry.date} ${entry.startTime}`, 'YYYY-MM-DD HH:mm');
+        let end = dayjs(`${entry.date} ${entry.endTime}`, 'YYYY-MM-DD HH:mm');
+        if (end.isBefore(start)) end = end.add(1, 'day');
+        totalScheduledMinutes += end.diff(start, 'minute');
+      }
+  
+      if (entry.sessions && Array.isArray(entry.sessions)) {
+        entry.sessions.forEach(session => {
+          if (!session.in || !session.out || session.in === '00:00' && session.out === '00:00') return;
+          const inTime = dayjs(`${entry.date} ${session.in}`, 'YYYY-MM-DD HH:mm');
+          let outTime = dayjs(`${entry.date} ${session.out}`, 'YYYY-MM-DD HH:mm');
+          if (outTime.isBefore(inTime)) outTime = outTime.add(1, 'day');
+          totalWorkedMinutes += outTime.diff(inTime, 'minute');
+        });
+      } else if (entry.inTime && entry.outTime && entry.inTime !== '00:00' && entry.outTime !== '00:00') {
+        const inTime = dayjs(`${entry.date} ${entry.inTime}`, 'YYYY-MM-DD HH:mm');
+        let outTime = dayjs(`${entry.date} ${entry.outTime}`, 'YYYY-MM-DD HH:mm');
+        if (outTime.isBefore(inTime)) outTime = outTime.add(1, 'day');
+        totalWorkedMinutes += outTime.diff(inTime, 'minute');
+      }
     });
-
+  
     const totalScheduledHours = (totalScheduledMinutes / 60).toFixed(2);
     const totalWorkedHours = (totalWorkedMinutes / 60).toFixed(2);
 
@@ -142,11 +152,27 @@ export default function Schedule() {
                                 <p className="text-sm text-gray-400">Loading...</p>
                             ) : entry ? (
                                 <>
-                                    {entry.status === 'on_call' && (
-                                        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-2 rounded text-sm font-medium">
-                                            On Call
+                                {entry.status === 'on_call' && (
+                                  <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-2 rounded text-sm font-medium">
+                                    On Call
+                                    {entry.sessions?.length > 0 && entry.sessions.map((session, i) => {
+                                      const inTime = dayjs(`${entry.date} ${session.in}`, 'YYYY-MM-DD HH:mm');
+                                      let outTime = dayjs(`${entry.date} ${session.out}`, 'YYYY-MM-DD HH:mm');
+                                      if (outTime.isBefore(inTime)) outTime = outTime.add(1, 'day');
+                                      const diff = outTime.diff(inTime, 'minute');
+                                      const hrs = Math.floor(diff / 60);
+                                      const mins = diff % 60;
+                                      return (
+                                        <div key={i} className="text-sm text-green-700">
+                                          🕒 {inTime.format('h:mm A')} – {outTime.format('h:mm A')} ({hrs}h {mins}m)
                                         </div>
-                                    )}
+                                      );
+                                    })}
+                                     {entry.manager && <p className="text-xs text-teal-700">Manager: {entry.manager}</p>}
+                                     {entry.notes && <p className="text-xs text-teal-700">Notes: {entry.notes}</p>}
+                                  </div>
+                                )}
+              
 
                                     {entry.status === 'not_available' && (
                                         <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-sm font-medium">
@@ -154,54 +180,43 @@ export default function Schedule() {
                                         </div>
                                     )}
 
-                                    {entry.status === 'scheduled' && (
-                                        <div className="bg-teal-50 border border-teal-200 text-teal-800 px-3 py-2 rounded text-sm space-y-1">
-                                            <p className="font-medium">
-                                                🗓 Scheduled:{' '}
-                                                {dayjs(`${entry.date} ${entry.startTime}`, 'YYYY-MM-DD HH:mm').format('h:mm A')} –{' '}
-                                                {dayjs(`${entry.date} ${entry.endTime}`, 'YYYY-MM-DD HH:mm').format('h:mm A')}
-                                            </p>
-
-                                            {entry.inTime && (
-                                                <p className="text-green-700">
-                                                    🕒 Punched In: {dayjs(`${entry.date} ${entry.inTime}`, 'YYYY-MM-DD HH:mm').format('h:mm A')}
+                                        {entry.status === 'scheduled'  && (
+                                            <div className="bg-teal-50 border border-teal-200 text-teal-800 px-3 py-2 rounded text-sm space-y-1">
+                                                <p className="font-medium">
+                                                    🗓 Scheduled: {dayjs(`${entry.date} ${entry.startTime}`, 'YYYY-MM-DD HH:mm').format('h:mm A')} – {dayjs(`${entry.date} ${entry.endTime}`, 'YYYY-MM-DD HH:mm').format('h:mm A')}
                                                 </p>
-                                            )}
+                                                {entry.sessions?.length > 0 && entry.sessions.map((session, i) => {
+                                                    const inTime = dayjs(`${entry.date} ${session.in}`, 'YYYY-MM-DD HH:mm');
+                                                    let outTime = dayjs(`${entry.date} ${session.out}`, 'YYYY-MM-DD HH:mm');
+                                                    if (outTime.isBefore(inTime)) outTime = outTime.add(1, 'day');
+                                                    const diff = outTime.diff(inTime, 'minute');
+                                                    const hrs = Math.floor(diff / 60);
+                                                    const mins = diff % 60;
+                                                    return (
+                                                        <div key={i} className="text-sm text-green-700">
+                                                            🕒 {inTime.format('h:mm A')} – {outTime.format('h:mm A')} ({hrs}h {mins}m)
+                                                        </div>
+                                                    );
+                                                })}
 
-                                            {entry.outTime && (
-                                                <>
-                                                    <p className="text-orange-700">
-                                                        🕓 Punched Out: {dayjs(`${entry.date} ${entry.outTime}`, 'YYYY-MM-DD HH:mm').format('h:mm A')}
-                                                    </p>
+                                                {!entry.sessions && entry.inTime && entry.outTime && (
+                                                    <div className="text-sm text-green-700">
+                                                        🕒 {dayjs(`${entry.date} ${entry.inTime}`).format('h:mm A')} – {dayjs(`${entry.date} ${entry.outTime}`).format('h:mm A')}
+                                                    </div>
+                                                )}
 
-                                                    {entry.inTime && (
-                                                        <p className=" font-bold text-green-600">
-                                                            ⏱ Total Worked:{' '}
-                                                            {(() => {
-                                                                const inTime = dayjs(`${entry.date} ${entry.inTime}`, 'YYYY-MM-DD HH:mm');
-                                                                const outTime = dayjs(`${entry.date} ${entry.outTime}`, 'YYYY-MM-DD HH:mm');
-                                                                const diff = outTime.diff(inTime, 'minute');
-                                                                const hrs = Math.floor(diff / 60);
-                                                                const mins = diff % 60;
-                                                                return `${hrs}h ${mins}m`;
-                                                            })()}
-                                                        </p>
-                                                    )}
-                                                </>
-                                            )}
+                                                {entry.manager && <p className="text-xs text-teal-700">Manager: {entry.manager}</p>}
+                                                {entry.notes && <p className="text-xs text-teal-700">Notes: {entry.notes}</p>}
+                                            </div>
+                                        )}
 
-                                            {entry.manager && (
-                                                <p className="text-xs text-teal-700">Manager: {entry.manager}</p>
-                                            )}
-                                            {entry.notes && (
-                                                <p className="text-xs text-teal-700">Notes: {entry.notes}</p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {entry.notes && entry.status !== 'scheduled' && (
+                                    {/* {entry.notes  && (
                                         <p className="text-xs text-gray-500 mt-1">Notes: {entry.notes}</p>
                                     )}
+                                     {entry.manager  && (
+                                        <p className="text-xs text-gray-500 mt-1">manager: {entry.manager}</p>
+                                    )} */}
+                                
                                 </>
                             ) : (
                                 <p className="text-sm text-gray-500">No shifts scheduled.</p>
