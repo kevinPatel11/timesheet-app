@@ -8,33 +8,51 @@ const shiftTypes = ['Working', 'On Call', 'Not Available'];
 export default function AddScheduleModal({ weekStart, onClose, existingEntry = null, editDate = null }) {
   const initialSchedule = existingEntry
     ? [{
-      day: editDate,
-      type: existingEntry.status === 'scheduled'
-        ? 'Working'
-        : existingEntry.status === 'on_call'
+        day: editDate,
+        type: existingEntry.status === 'scheduled'
+          ? 'Working'
+          : existingEntry.status === 'on_call'
           ? 'On Call'
           : 'Not Available',
-      start: existingEntry.startTime || '',
-      end: existingEntry.endTime || '',
-      notes: existingEntry.notes || '',
-      manager: existingEntry.manager || '',
-      punchIn: existingEntry.inTime || '',
-      punchOut: existingEntry.outTime || '',
-    }]
+        start: existingEntry.startTime || '',
+        end: existingEntry.endTime || '',
+        notes: existingEntry.notes || '',
+        manager: existingEntry.manager || '',
+        sessions: existingEntry.sessions || [{ in: '', out: '' }],
+      }]
     : [...Array(7)].map((_, idx) => ({
-      day: weekStart.add(idx, 'day'),
-      type: 'Working',
-      start: '15:00',
-      end: '23:00',
-      notes: '',
-      manager: ''
-    }));
+        day: weekStart.add(idx, 'day'),
+        type: 'Working',
+        start: '15:00',
+        end: '23:00',
+        notes: '',
+        manager: '',
+        sessions: [{ in: '', out: '' }],
+      }));
 
   const [schedule, setSchedule] = useState(initialSchedule);
 
   const handleChange = (index, field, value) => {
     const updated = [...schedule];
     updated[index][field] = value;
+    setSchedule(updated);
+  };
+
+  const handleSessionChange = (entryIndex, sessionIndex, field, value) => {
+    const updated = [...schedule];
+    updated[entryIndex].sessions[sessionIndex][field] = value;
+    setSchedule(updated);
+  };
+
+  const addSession = (entryIndex) => {
+    const updated = [...schedule];
+    updated[entryIndex].sessions.push({ in: '', out: '' });
+    setSchedule(updated);
+  };
+
+  const removeSession = (entryIndex, sessionIndex) => {
+    const updated = [...schedule];
+    updated[entryIndex].sessions.splice(sessionIndex, 1);
     setSchedule(updated);
   };
 
@@ -66,21 +84,18 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
             entry.type === 'Working'
               ? 'scheduled'
               : entry.type === 'On Call'
-                ? 'on_call'
-                : 'not_available',
+              ? 'on_call'
+              : 'not_available',
           ...(entry.type === 'Working' && {
             startTime: entry.start,
             endTime: entry.end,
             manager: entry.manager || '',
             notes: entry.notes || '',
-
           }),
-          ...(entry.type !== 'Working' && { notes: entry.notes || '' }),
-          ...(entry.punchIn && { inTime: entry.punchIn }),
-          ...(entry.punchOut && { outTime: entry.punchOut }),
+          ...(entry.type !== 'Working' && { notes: entry.notes || '',manager: entry.manager || '' }),
+          ...(entry.sessions && { sessions: entry.sessions }),
           userId: user.uid,
         };
-
 
         await setDoc(dayDocRef, entryData);
       }
@@ -89,24 +104,6 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
     } catch (error) {
       console.error('🔥 Error saving schedule:', error);
       alert('Something went wrong while saving your schedule. Check console.');
-    }
-  };
-
-  const handleDelete = async () => {
-    const user = auth.currentUser;
-    if (!user || !editDate) return;
-
-    try {
-      const weekId = weekStart.format('YYYY-MM-DD');
-      const dayId = editDate.format('YYYY-MM-DD');
-      const dayDocRef = doc(db, 'schedules', user.uid, 'weeks', weekId, 'days', dayId);
-
-      await deleteDoc(dayDocRef);
-      alert('Schedule deleted!');
-      onClose();
-    } catch (error) {
-      console.error('🔥 Error deleting schedule:', error);
-      alert('Something went wrong while deleting your schedule.');
     }
   };
 
@@ -198,52 +195,54 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
                 )}
               </div>
 
-              {editDate &&  (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                  <div>
-                    <label className="block text-sm text-gray-600">Punch In Time</label>
-                    <input
-                      type="time"
-                      className="w-full border rounded px-2 py-1"
-                      value={entry.punchIn}
-                      onChange={(e) => handleChange(index, 'punchIn', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600">Punch Out Time</label>
-                    <input
-                      type="time"
-                      className="w-full border rounded px-2 py-1"
-                      value={entry.punchOut}
-                      onChange={(e) => handleChange(index, 'punchOut', e.target.value)}
-                    />
-                  </div>
-                  <div className="mt-2">
-                    <label className="block text-sm text-gray-600">
-                      Notes
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded px-2 py-1"
-                      value={entry.notes}
-                      onChange={(e) => handleChange(index, 'notes', e.target.value)}
-                    />
-                  </div>
-                  <div className="mt-2">
-                    <label className="block text-sm text-gray-600">
-                      Manager
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded px-2 py-1"
-                      value={entry.manager}
-                      onChange={(e) => handleChange(index, 'manager', e.target.value)}
-                    />
-                  </div>
+              {editDate && (
+                <div className="mt-4 space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Punch Sessions</label>
+                  {entry.sessions.map((session, sIndex) => (
+                    <div key={sIndex} className="grid grid-cols-2 md:grid-cols-4 gap-2 items-center">
+                      <input
+                        type="time"
+                        className="border rounded px-2 py-1"
+                        value={session.in}
+                        onChange={(e) => handleSessionChange(index, sIndex, 'in', e.target.value)}
+                      />
+                      <input
+                        type="time"
+                        className="border rounded px-2 py-1"
+                        value={session.out}
+                        onChange={(e) => handleSessionChange(index, sIndex, 'out', e.target.value)}
+                      />
+                      <button
+                        onClick={() => removeSession(index, sIndex)}
+                        className="text-red-600 text-sm"
+                      >Remove</button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => addSession(index)}
+                    className="text-sm text-teal-600 mt-2"
+                  >+ Add Session</button>
                 </div>
               )}
 
-
+              <div className="mt-4">
+                <label className="block text-sm text-gray-600">Notes</label>
+                <input
+                  type="text"
+                  className="w-full border rounded px-2 py-1"
+                  value={entry.notes}
+                  onChange={(e) => handleChange(index, 'notes', e.target.value)}
+                />
+              </div>
+              <div className="mt-2">
+                <label className="block text-sm text-gray-600">Manager</label>
+                <input
+                  type="text"
+                  className="w-full border rounded px-2 py-1"
+                  value={entry.manager}
+                  onChange={(e) => handleChange(index, 'manager', e.target.value)}
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -255,11 +254,6 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
           <button onClick={handleSubmit} className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700">
             Save Schedule
           </button>
-          {/* {editDate && existingEntry && (
-            <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-              Delete
-            </button>
-          )} */}
         </div>
       </div>
     </div>
