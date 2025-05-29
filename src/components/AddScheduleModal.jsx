@@ -220,17 +220,6 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
                   </div>
                   <div className="mt-2">
                     <label className="block text-sm text-gray-600">
-                      Manager
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded px-2 py-1"
-                      value={entry.manager}
-                      onChange={(e) => handleChange(index, 'manager', e.target.value)}
-                    />
-                  </div>
-                  <div className="mt-2">
-                    <label className="block text-sm text-gray-600">
                       Notes
                     </label>
                     <input
@@ -238,6 +227,17 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
                       className="w-full border rounded px-2 py-1"
                       value={entry.notes}
                       onChange={(e) => handleChange(index, 'notes', e.target.value)}
+                    />
+                  </div>
+                  <div className="mt-2">
+                    <label className="block text-sm text-gray-600">
+                      Manager
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full border rounded px-2 py-1"
+                      value={entry.manager}
+                      onChange={(e) => handleChange(index, 'manager', e.target.value)}
                     />
                   </div>
                 </div>
