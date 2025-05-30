@@ -8,6 +8,7 @@ import Timesheets from './pages/Timesheets';
 import { AuthProvider, useAuth } from './firebase/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import AdminSheet from './pages/AdminSheet';
 
 function PrivateRoute({ children }) {
   const { currentUser } = useAuth();
@@ -27,6 +28,7 @@ function LayoutWithSidebar() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/timesheets" element={<Timesheets />} />
+            <Route path="/admin" element={<AdminSheet />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>

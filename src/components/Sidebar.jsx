@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, ListChecks, Settings, Waves } from 'lucide-react';
+import { LayoutDashboard, Calendar, ListChecks, Settings, Waves, User } from 'lucide-react';
 
 export default function Sidebar({ isOpen, onClose }) {
   return (
@@ -28,6 +28,7 @@ export default function Sidebar({ isOpen, onClose }) {
           { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
           { to: '/schedule', label: 'Schedule', icon: Calendar },
           { to: '/timesheets', label: 'Timesheets', icon: ListChecks },
+          { to: '/admin', label: 'Admin', icon: User },
         ].map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}

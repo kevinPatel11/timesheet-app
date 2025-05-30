@@ -140,10 +140,12 @@ export default function Schedule() {
 
                     return (
                         <div
-                            key={dayId}
-                            className="bg-white shadow rounded p-4 hover:ring-2 hover:ring-teal-300 cursor-pointer transition"
-                            onClick={() => entry && openEditModal(entry, day)}
-                        >
+  key={dayId}
+  className={`bg-white shadow rounded p-4 hover:ring-2 hover:ring-teal-300 cursor-pointer transition ${
+    dayjs().isSame(day, 'day') ? 'ring-2 ring-blue-400' : ''
+  }`}
+  onClick={() => entry && openEditModal(entry, day)}
+>
                             <h3 className="font-semibold text-gray-800 border-b pb-1 mb-2">
                                 {day.format('dddd')} <span className="text-sm text-gray-500">({day.format('MMMM D')})</span>
                             </h3>
