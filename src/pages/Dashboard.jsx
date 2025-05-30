@@ -97,20 +97,21 @@ const fetchTodaySchedule = async () => {
         notes,
         manager: existing?.manager || manager,
       };
+      const existingSessions = Array.isArray(existing.sessions) ? existing.sessions : [];
 
-      if (punchType === 'in' && scheduledStart) {
-        const sched = dayjs(`${dateId}T${scheduledStart}`);
-        if (punchTime.isBefore(sched)) {
-          toast.success('✅ Well done! You came early.');
-        } 
+      if (punchType === 'in') {
+        updated.sessions = [...existingSessions, { in: punchTime.format('HH:mm'), out: '' }];
+      } else if (punchType === 'out') {
+        const lastSession = existingSessions[existingSessions.length - 1];
+        if (lastSession && !lastSession.out) {
+          lastSession.out = punchTime.format('HH:mm');
+          updated.sessions = [...existingSessions.slice(0, -1), lastSession];
+        } else {
+          // Edge case: no matching punch-in session
+          updated.sessions = [...existingSessions, { in: '', out: punchTime.format('HH:mm') }];
+        }
       }
-
-      if (punchType === 'out' && scheduledEnd) {
-        const sched = dayjs(`${dateId}T${scheduledEnd}`);
-        if (punchTime.isBefore(sched)) {
-          toast('⏰ Early punch out. ');
-        } 
-      }
+      
 
       await setDoc(dayRef, updated, { merge: true });
 
