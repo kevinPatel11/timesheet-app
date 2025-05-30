@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { db, auth } from '../firebase/firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import isoWeek from 'dayjs/plugin/isoWeek';
+dayjs.extend(isoWeek);
 
 export default function Timesheets() {
   const months = [...Array(12)].map((_, i) => {
@@ -31,7 +33,7 @@ export default function Timesheets() {
     try {
       for (let i = 0; i < daysInMonth; i++) {
         const currentDate = startOfMonth.add(i, 'day');
-        const weekId = currentDate.startOf('week').add(1, 'day').format('YYYY-MM-DD'); // Monday start
+        const weekId = currentDate.isoWeekday(1).format('YYYY-MM-DD');
         const dayId = currentDate.format('YYYY-MM-DD');
         const ref = collection(db, 'schedules', user.uid, 'weeks', weekId, 'days');
         const snapshot = await getDocs(ref);
@@ -69,42 +71,69 @@ export default function Timesheets() {
     secondHalf: [],
   };
 
-records.forEach((entry) => {
-  const date = dayjs(entry.date);
-  const obj = {
-    date: date.format('D-MMM'),
-    day: date.format('dddd'),
-    manager: entry.manager || '',
-    notes: entry.notes || '',
-  };
-
-  if (entry.status === 'on_call') {
-    obj.scheduleStart = 'ON CALL';
-    obj.scheduleEnd = 'ON CALL';
-    obj.actualStart = '';
-    obj.actualEnd = '';
-    obj.total = '0:00';
-  } else if (entry.status === 'not_available') {
-    obj.scheduleStart = 'NOT AVAILABLE';
-    obj.scheduleEnd = 'NOT AVAILABLE';
-    obj.actualStart = '';
-    obj.actualEnd = '';
-    obj.total = '0:00';
-  } else {
-    obj.scheduleStart = entry.startTime || '';
-    obj.scheduleEnd = entry.endTime || '';
-    obj.actualStart = entry.inTime || '';
-    obj.actualEnd = entry.outTime || '';
-
-    const start = dayjs(`${entry.date} ${entry.inTime}`);
-    const end = dayjs(`${entry.date} ${entry.outTime}`);
-    obj.total = entry.inTime && entry.outTime ? formatDuration(start, end) : '0:00';
-  }
-
-  (date.date() <= 15 ? groupedRecords.firstHalf : groupedRecords.secondHalf).push(obj);
-});
-
-
+  records.forEach((entry) => {
+    const date = dayjs(entry.date);
+    const obj = {
+      date: date.format('D-MMM'),
+      day: date.format('dddd'),
+      manager: entry.manager || '',
+      notes: entry.notes || '',
+      scheduleStart: entry.startTime || '',
+      scheduleEnd: entry.endTime || '',
+      actualStart: '',
+      actualEnd: '',
+      total: '0:00',
+      totalMinutes: 0,
+    };
+  
+    // ⏱️ Compute session-based time (if available)
+    let totalMinutes = 0;
+    let firstIn = '';
+    let lastOut = '';
+  
+    if (Array.isArray(entry.sessions) && entry.sessions.length > 0) {
+      entry.sessions.forEach((s) => {
+        if (s.in && s.out) {
+          const sessionStart = dayjs(`${entry.date} ${s.in}`);
+          let sessionEnd = dayjs(`${entry.date} ${s.out}`);
+          if (sessionEnd.isBefore(sessionStart)) {
+            sessionEnd = sessionEnd.add(1, 'day');
+          }
+  
+          totalMinutes += sessionEnd.diff(sessionStart, 'minute');
+  
+          if (!firstIn || sessionStart.isBefore(dayjs(`${entry.date} ${firstIn}`))) {
+            firstIn = s.in;
+          }
+          if (!lastOut || sessionEnd.isAfter(dayjs(`${entry.date} ${lastOut}`))) {
+            lastOut = s.out;
+          }
+        }
+      });
+  
+      obj.actualStart = firstIn || 'N/A';
+      obj.actualEnd = lastOut || 'N/A';
+      obj.total = totalMinutes > 0
+        ? formatDuration(dayjs().startOf('day'), dayjs().startOf('day').add(totalMinutes, 'minute'))
+        : '0:00';
+      obj.totalMinutes = totalMinutes;
+    } else {
+      obj.actualStart = 'N/A';
+      obj.actualEnd = 'N/A';
+    }
+  
+    //Force override schedule fields if status requires it
+    if (entry.status === 'on_call') {
+      obj.scheduleStart = 'ON CALL';
+      obj.scheduleEnd = 'ON CALL';
+    } else if (entry.status === 'not_available') {
+      obj.scheduleStart = 'NOT AVAILABLE';
+      obj.scheduleEnd = 'NOT AVAILABLE';
+    }
+  
+    (date.date() <= 15 ? groupedRecords.firstHalf : groupedRecords.secondHalf).push(obj);
+  });
+  
 const renderTable = (data, label) => {
   let totalScheduledMinutes = 0;
   let totalWorkedMinutes = 0;
@@ -126,7 +155,8 @@ const renderTable = (data, label) => {
     if (rec.actualStart && rec.actualEnd) {
       const start = dayjs(`2025-01-01 ${rec.actualStart}`);
       const end = dayjs(`2025-01-01 ${rec.actualEnd}`);
-      totalWorkedMinutes += end.diff(start, 'minute');
+// Actual total from totalMinutes field
+totalWorkedMinutes += rec.totalMinutes || 0;
     }
   });
 
