@@ -163,6 +163,7 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
                         <option value="12:00-20:00">12:00 PM - 8:00 PM</option>
                         <option value="15:00-23:00">3:00 PM - 11:00 PM</option>
                         <option value="15:30-23:30">3:30 PM - 11:30 PM</option>
+                        <option value="16:00-12:00">4:00 PM - 12:00 AM</option>
                         <option value="custom">Custom</option>
                       </select>
                     </div>
