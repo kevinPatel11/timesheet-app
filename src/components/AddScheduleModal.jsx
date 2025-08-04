@@ -142,7 +142,7 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
                       <select
                         className="w-full border rounded px-2 py-1"
                         value={
-                          ['09:00-17:00', '12:00-20:00', '15:00-23:00', '15:30-23:30']
+                          ['09:00-17:00', '12:00-20:00', '15:00-23:00', '15:30-23:30','16:00-12:00']
                             .includes(`${entry.start}-${entry.end}`)
                             ? `${entry.start}-${entry.end}`
                             : 'custom'
@@ -168,7 +168,7 @@ export default function AddScheduleModal({ weekStart, onClose, existingEntry = n
                     </div>
 
                     {/* Custom Inputs */}
-                    {(['09:00-17:00', '12:00-20:00', '15:00-23:00', '15:30-23:30'].includes(`${entry.start}-${entry.end}`) === false) && (
+                    {(['09:00-17:00', '12:00-20:00', '15:00-23:00', '15:30-23:30','16:00-12:00'].includes(`${entry.start}-${entry.end}`) === false) && (
                       <>
                         <div>
                           <label className="block text-sm text-gray-600">Start Time</label>
