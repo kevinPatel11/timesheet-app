@@ -147,7 +147,10 @@ const renderTable = (data, label) => {
       rec.scheduleStart !== 'NOT AVAILABLE'
     ) {
       const start = dayjs(`2025-01-01 ${rec.scheduleStart}`);
-      const end = dayjs(`2025-01-01 ${rec.scheduleEnd}`);
+      let end = dayjs(`2025-01-01 ${rec.scheduleEnd}`);
+      if (end.isBefore(start)) {
+        end = end.add(1, 'day');
+      }
       totalScheduledMinutes += end.diff(start, 'minute');
     }
 
